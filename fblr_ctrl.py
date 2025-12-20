@@ -1,6 +1,6 @@
 import socket
 
-ESP32_IP = "192.168.249.205"  # replace with your ESP32 IP
+ESP32_IP = "192.168.138.122"  # replace with your ESP32 IP
 PORT = 4210
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

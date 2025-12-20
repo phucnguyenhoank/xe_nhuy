@@ -3,14 +3,14 @@
 #include <Arduino.h>
 
 // Motor A
-#define ENA_A 19
-#define IN1_A 5
-#define IN2_A 18
+#define ENA_A 22
+#define IN1_A 16
+#define IN2_A 17
 
 // Motor B
-#define ENA_B 17
-#define IN1_B 16
-#define IN2_B 4
+#define ENA_B 23
+#define IN1_B 18
+#define IN2_B 19
 
 // Wi-Fi credentials
 const char* ssid     = "pcas";
@@ -40,13 +40,13 @@ void move(char cmd) {
       runMotor(ENA_A, IN1_A, IN2_A, false);
       runMotor(ENA_B, IN1_B, IN2_B, false);
       break;
-    case 'l': // left (A backward, B forward)
-      runMotor(ENA_A, IN1_A, IN2_A, false);
-      runMotor(ENA_B, IN1_B, IN2_B, true);
-      break;
-    case 'r': // right (A forward, B backward)
+    case 'l': // left (A forward, B backward)
       runMotor(ENA_A, IN1_A, IN2_A, true);
       runMotor(ENA_B, IN1_B, IN2_B, false);
+      break;
+    case 'r': // right (A backward, B forward)
+      runMotor(ENA_A, IN1_A, IN2_A, false);
+      runMotor(ENA_B, IN1_B, IN2_B, true);
       break;
     default:
       stopMotor(ENA_A);
@@ -54,7 +54,7 @@ void move(char cmd) {
       return;
   }
 
-  delay(500); // run for 500ms
+  delay(100);
   stopMotor(ENA_A);
   stopMotor(ENA_B);
 }
