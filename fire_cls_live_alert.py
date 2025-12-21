@@ -4,7 +4,7 @@ from fire_model import FireClassifier
 import socket
 import time
 
-ESP32_IP = "192.168.138.122"
+ESP32_IP = "192.168.28.122"
 PORT = 4210
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -17,7 +17,7 @@ model.load_state_dict(torch.load("best_fire_model.pth", map_location=device))
 model.eval()
 
 # ESP32-CAM stream
-stream_url = "http://192.168.138.141:81/stream"
+stream_url = "http://192.168.28.141:81/stream"
 cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
@@ -53,8 +53,15 @@ with torch.no_grad():
         print(f"{prob}, {label}")
 
         # ---- SEND COMMAND ----
-        cmd = "a" if label == "FIRE" else "o"
-        sock.sendto(cmd.encode(), (ESP32_IP, PORT))
+        if label == "FIRE":
+            cmd = "a"
+            sock.sendto(cmd.encode(), (ESP32_IP, PORT))
+        else:
+            cmd = "o"
+            sock.sendto(cmd.encode(), (ESP32_IP, PORT))
+            # cmd = "f"
+            # sock.sendto(cmd.encode(), (ESP32_IP, PORT))
+            
 
         # ---- DRAW OVERLAY ----
         color = (0, 0, 255) if label == "FIRE" else (0, 255, 0)

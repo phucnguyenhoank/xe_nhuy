@@ -21,6 +21,7 @@ preprocess = transforms.Compose([
 # 3. Open the camera
 cap = cv2.VideoCapture(0) # 0 is typically the built-in webcam
 
+
 while True:
     ret, frame = cap.read()
     if not ret: break
