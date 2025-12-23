@@ -64,7 +64,7 @@ with torch.no_grad():
         # cv2.imwrite(filename, frame)
 
         # In log ra terminal
-        print(f"Saved: {filename} | Prediction: {label} ({prob:.3f})")
+        # print(f"Saved: {filename} | Prediction: {label} ({prob:.3f})")
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break

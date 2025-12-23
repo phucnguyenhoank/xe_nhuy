@@ -23,8 +23,8 @@ cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 def detect_fire(frame):
     # --- FAST PREPROCESS ---
-    img = cv2.resize(frame, (224, 224))
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # img = cv2.resize(frame, (224, 224))
+    img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     input_tensor = (
         torch.from_numpy(img)
@@ -59,9 +59,6 @@ with torch.no_grad():
         else:
             cmd = "o"
             sock.sendto(cmd.encode(), (ESP32_IP, PORT))
-            # cmd = "f"
-            # sock.sendto(cmd.encode(), (ESP32_IP, PORT))
-            
 
         # ---- DRAW OVERLAY ----
         color = (0, 0, 255) if label == "FIRE" else (0, 255, 0)
