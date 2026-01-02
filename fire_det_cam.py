@@ -1,41 +1,66 @@
 import cv2
+import torch
 from ultralytics import YOLO
 
-# 1. Load your trained model
-# Replace with the path to your actual trained model file
-# If you exported to OpenVINO, point to the directory: "runs/detect/train/weights/best_openvino_model/"
-model = YOLO("weights/best.pt")
+class FireDetector:
+    def __init__(self, model_path="weights/best.pt", conf_threshold=0.5):
+        """Initialize the detector and automatically select the best hardware."""
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"Initializing YOLO11 on: {self.device}")
+        
+        self.model = YOLO(model_path)
+        self.conf = conf_threshold
 
-stream_url = "http://192.168.188.141:81/stream"
+    def process_frame(self, frame):
+        """Runs inference and extracts object centers."""
+        # imgsz=320 matches your 240x320 dataset requirements
+        results = self.model(frame, imgsz=320, conf=self.conf, device=self.device, verbose=False)
+        
+        centers = []
+        for r in results:
+            for box in r.boxes.xywh:
+                x, y, w, h = box
+                centers.append((int(x), int(y)))
+        
+        # results[0].plot() provides the annotated image
+        return results[0].plot(), centers
 
-cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
-cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-
-if not cap.isOpened():
-    raise RuntimeError("Cannot open stream")
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Failed to read frame")
-        break
-
-    # 2. Run Inference
-    # imgsz=320: Matches your training size for best accuracy
-    # verbose=False: Prevents printing every prediction to the console
-    # conf=0.5: Only show detections with >50% confidence (adjust as needed)
-    results = model(frame, imgsz=320, conf=0.5, verbose=False)
-
-    # 3. Visualize Results
-    # .plot() draws the bounding boxes and labels directly onto the frame
-    annotated_frame = results[0].plot()
-
-    # 4. Display the annotated frame
-    cv2.imshow("YOLO11 Fire Detection", annotated_frame)
+def main():
+    # Configuration
+    STREAM_URL = "http://192.168.188.141:81/stream"
+    MODEL_PATH = "weights/best.pt"
     
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord("q"):
-        break
+    # 1. Setup Detector
+    detector = FireDetector(model_path=MODEL_PATH)
 
-cap.release()
-cv2.destroyAllWindows()
+    # 2. Setup Stream
+    cap = cv2.VideoCapture(STREAM_URL, cv2.CAP_FFMPEG)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+    if not cap.isOpened():
+        print("Error: Could not open stream.")
+        return
+
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # 3. Detect and Get Metadata
+            annotated_frame, centers = detector.process_frame(frame)
+
+            # 4. Handle Results (Modular output)
+            for x, y in centers:
+                print(f"Fire Detected at Center: X={x}, Y={y}")
+
+            # 5. UI Logic
+            cv2.imshow("YOLO11 Fire Detection", annotated_frame)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
