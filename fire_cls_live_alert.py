@@ -23,7 +23,6 @@ cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
 def detect_fire(frame):
     # --- FAST PREPROCESS ---
-    # img = cv2.resize(frame, (224, 224))
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     input_tensor = (

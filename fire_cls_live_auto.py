@@ -17,7 +17,7 @@ model.load_state_dict(torch.load("best_fire_model.pth", map_location=device))
 model.eval()
 
 # ESP32-CAM stream
-stream_url = "http://192.168.28.141:81/stream"
+stream_url = "http://192.168.188.141:81/stream"
 cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
