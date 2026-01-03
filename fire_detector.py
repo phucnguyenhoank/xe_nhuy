@@ -54,11 +54,16 @@ def main():
 
         # Push only metadata (small & fast)
         if centers:
+            x, y = centers[0]  # assuming strongest detection first
             payload = {
                 "centers": centers,
-                "timestamp": cv2.getTickCount()
+                "timestamp": cv2.getTickCount(),
+                "x": x  # optional: send only key info
             }
-            r.rpush(QUEUE_NAME, json.dumps(payload))
+            # Only push if significantly different from last pushed
+            if not hasattr(main, 'last_pushed_x') or abs(x - main.last_pushed_x) > 10:  # tune threshold
+                r.rpush(QUEUE_NAME, json.dumps(payload))
+                main.last_pushed_x = x
 
         cv2.imshow("Fire Detection", annotated)
         if cv2.waitKey(1) & 0xFF == ord("q"):

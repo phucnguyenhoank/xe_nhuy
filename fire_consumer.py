@@ -10,7 +10,7 @@ PORT = 4210
 CENTER = 160
 R = 25
 CONTROL_HZ = 2
-CONTROL_INTERVAL = 1.0 / CONTROL_HZ
+CONTROL_INTERVAL = 5.0 / CONTROL_HZ
 
 QUEUE_NAME = "fire_centers"
 # ==================
@@ -18,7 +18,7 @@ QUEUE_NAME = "fire_centers"
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def send_cmd(cmd):
-    sock.sendto(cmd.encode(), (ESP32_IP, PORT))
+    # sock.sendto(cmd.encode(), (ESP32_IP, PORT))
     print("Sent:", cmd)
 
 
