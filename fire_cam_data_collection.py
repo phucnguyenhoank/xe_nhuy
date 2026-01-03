@@ -3,12 +3,11 @@ import os
 import time
 
 stream_url = "http://192.168.188.141:81/stream"
-SAVE_DIR = "real_fire_dataset/"
+SAVE_DIR = "real_fire_dataset2/"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
 # cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 if not cap.isOpened():
     raise RuntimeError("Cannot open stream")
 

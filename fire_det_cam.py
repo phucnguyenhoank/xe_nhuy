@@ -28,7 +28,7 @@ class FireDetector:
 def main():
     # Configuration
     STREAM_URL = "http://192.168.188.141:81/stream"
-    MODEL_PATH = "weights/best.pt"
+    MODEL_PATH = "weights/best_2.pt"
     
     # 1. Setup Detector
     detector = FireDetector(model_path=MODEL_PATH)

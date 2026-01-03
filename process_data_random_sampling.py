@@ -3,9 +3,9 @@ import random
 import shutil
 
 # Configure paths
-source_dir = 'fire_dataset/1_fire'
-target_dir = 'fire_dataset/1_fire_mini'
-sample_size = 45  # Number of images to sample
+source_dir = 'real_fire_dataset2/0_nofire'
+target_dir = 'real_fire_dataset2/0_nofire_mini'
+sample_size = 40  # Number of images to sample
 
 # NEW: Create the target directory if it doesn't exist
 os.makedirs(target_dir, exist_ok=True)
