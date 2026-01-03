@@ -82,11 +82,11 @@ void alertOff() {
 
 // ------------------- Alert -------------------
 void pumpOn() {
-  digitalWrite(PUMP_PIN, LOW);
+  digitalWrite(PUMP_PIN, HIGH);
 }
 
 void pumpOff() {
-  digitalWrite(PUMP_PIN, HIGH);
+  digitalWrite(PUMP_PIN, LOW);
 }
 
 
@@ -116,7 +116,7 @@ void setup() {
 
   // Pump
   pinMode(PUMP_PIN, OUTPUT);
-  digitalWrite(PUMP_PIN, HIGH); // NO pump/HIGH by default
+  digitalWrite(PUMP_PIN, LOW); // NO pump/HIGH by default
 
   // Wi-Fi connect
   WiFi.begin(ssid, password);

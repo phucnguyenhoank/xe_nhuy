@@ -1,81 +1,70 @@
 import cv2
-import torch
+import time
 import socket
+import torch
 from ultralytics import YOLO
 
-class FireTrackingCar:
-    def __init__(self, model_path="weights/best.pt", esp32_ip="192.168.188.122", port=4210):
-        # 1. AI Setup
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.model = YOLO(model_path)
-        
-        # 2. Network Setup
-        self.esp32_ip = esp32_ip
-        self.port = port
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
-        # 3. Control Constants (Based on 320px width)
-        self.FRAME_CENTER_X = 160 
-        self.DEADZONE = 25  # Pixels (+/-) where the fire is "centered enough"
-        self.last_cmd = None
+# ===== CONFIG =====
+STREAM_URL = "http://192.168.188.141:81/stream"
+ESP32_IP = "192.168.188.122"
+PORT = 4210
 
-    def send_command(self, cmd):
-        """Sends command only if it's different from the last one to save bandwidth."""
-        if cmd != self.last_cmd:
-            self.sock.sendto(cmd.encode(), (self.esp32_ip, self.port))
-            self.last_cmd = cmd
-            print(f"Action: {cmd}")
+CENTER = 160
+R = 25
+CONTROL_HZ = 2
+CONTROL_INTERVAL = 1.0 / CONTROL_HZ
+# ==================
 
-    def track_fire(self, frame):
-        """Logic to decide movement based on fire position."""
-        results = self.model(frame, imgsz=320, conf=0.5, device=self.device, verbose=False)
-        
-        centers = []
-        for r in results:
-            for box in r.boxes.xywh:
-                centers.append(int(box[0])) # We only need X-center for steering
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-        if not centers:
-            # Optional: self.send_command("s") # Stop if fire is lost
-            return results[0].plot()
+def send_cmd(cmd):
+    sock.sendto(cmd.encode(), (ESP32_IP, PORT))
+    print("Sent:", cmd)
 
-        # Track the first fire detected
-        fire_x = centers[0]
+# ===== YOLO =====
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print("Using device:", device)
+model = YOLO("weights/best.pt")
 
-        # 4. Movement Logic
-        if fire_x < (self.FRAME_CENTER_X - self.DEADZONE):
-            self.send_command("l") # Fire is to the left, turn left
-        elif fire_x > (self.FRAME_CENTER_X + self.DEADZONE):
-            self.send_command("r") # Fire is to the right, turn right
+# ===== STREAM =====
+cap = cv2.VideoCapture(STREAM_URL)
+
+if not cap.isOpened():
+    print("❌ Cannot open stream. Check ESP32 IP / WiFi.")
+    exit(1)
+
+last_control_time = 0
+
+# ===== LOOP =====
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("❌ Stream lost")
+        break
+
+    results = model(frame, imgsz=320, conf=0.5, device=device, verbose=False)
+    annotated = results[0].plot()
+
+    centers = []
+    for box in results[0].boxes.xywh:
+        x, y, w, h = box
+        centers.append((int(x), int(y)))
+
+    now = time.time()
+    if centers and now - last_control_time >= CONTROL_INTERVAL:
+        last_control_time = now
+        x, y = centers[0]
+
+        if x < CENTER - R:
+            send_cmd("l")
+        elif x > CENTER + R:
+            send_cmd("r")
         else:
-            # Fire is in the center! Stop movement.
-            # You could also send 'w' here to start the pump
-            self.send_command("s") 
-            print("FIRE CENTERED - READY")
+            print("🔥 FIRE CENTERED")
 
-        return results[0].plot()
+    cv2.imshow("Fire Detection", annotated)
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
 
-def main():
-    STREAM_URL = "http://192.168.188.141:81/stream"
-    car = FireTrackingCar()
-    
-    cap = cv2.VideoCapture(STREAM_URL, cv2.CAP_FFMPEG)
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret: break
-
-        # Process and Control
-        annotated_frame = car.track_fire(frame)
-
-        cv2.imshow("Smart Fire-Fighting Car", annotated_frame)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            car.send_command("s") # Safety stop
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    main()
+cap.release()
+cv2.destroyAllWindows()
